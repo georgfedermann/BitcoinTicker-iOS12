@@ -43,7 +43,7 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
         return currencyArray[row];
     }
     
-    func pickerView(_ pikcerView:UIPickerView, didSelectRow row:Int, inComponent component:Int) {
+    func pickerView(_ pickerView:UIPickerView, didSelectRow row:Int, inComponent component:Int) {
         print("\(row) -> \(currencyArray[row]).");
     }
     
