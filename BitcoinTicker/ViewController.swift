@@ -6,13 +6,19 @@
 //  Copyright © 2016 London App Brewery. All rights reserved.
 //
 
-import UIKit
+import Alamofire;
+import SwiftyJSON;
+import UIKit;
 
 class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDelegate {
     
-    let baseURL = "https://apiv2.bitcoinaverage.com/indices/global/ticker/BTC"
-    let currencyArray = ["AUD", "BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","SEK","SGD","USD","ZAR"]
-    var finalURL = ""
+    let baseURL = "https://apiv2.bitcoinaverage.com/indices/global/ticker/BTC";
+    let currencyArray = ["AUD", "BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","SEK","SGD","USD","ZAR"];
+    let currencySymbols = ["$", "R$", "$", "¥", "€", "£", "$", "Rp", "₪", "₹", "¥", "$", "kr", "$", "zł", "lei", "₽", "kr", "$", "$", "R"];
+    var finalURL = "";
+    var latestRate:Int = 0;
+    var currentCurrency:String = "";
+    var currentCurrencySymbol:String = "";
     
     //Pre-setup IBOutlets
     @IBOutlet weak var bitcoinPriceLabel: UILabel!
@@ -45,59 +51,38 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
     
     func pickerView(_ pickerView:UIPickerView, didSelectRow row:Int, inComponent component:Int) {
         print("\(row) -> \(currencyArray[row]).");
-        finalURL = "\(baseURL)\(currencyArray[row])";
-        print("finalURL is \(finalURL)");
+        currentCurrency = currencyArray[row];
+        currentCurrencySymbol = currencySymbols[row];
+        getBitcoinStats(targetCurrency:currentCurrency);
+    }
+    
+    // MARK: - Networking
+    /***************************************************************/
+    func getBitcoinStats(targetCurrency:String){
+        // this is asynchronous again. Thus, the view update has to be triggered
+        // here, when it is known that the response has arrived.
+        Alamofire.request("\(baseURL)\(targetCurrency)", method: .get).responseJSON {
+            response in
+            if response.result.isSuccess {
+                print("Success! Got Bitcoin data.");
+                self.updateBitcoinData(json:JSON(response.result.value!));
+            } else {
+                print("Error: \(response.result.error!)");
+                self.bitcoinPriceLabel.text = "Connection Issues";
+            }
+        }
     }
     
     
-    
-    
-    //
-    //    //MARK: - Networking
-    //    /***************************************************************/
-    //
-    //    func getWeatherData(url: String, parameters: [String : String]) {
-    //
-    //        Alamofire.request(url, method: .get, parameters: parameters)
-    //            .responseJSON { response in
-    //                if response.result.isSuccess {
-    //
-    //                    print("Sucess! Got the weather data")
-    //                    let weatherJSON : JSON = JSON(response.result.value!)
-    //
-    //                    self.updateWeatherData(json: weatherJSON)
-    //
-    //                } else {
-    //                    print("Error: \(String(describing: response.result.error))")
-    //                    self.bitcoinPriceLabel.text = "Connection Issues"
-    //                }
-    //            }
-    //
-    //    }
-    //
-    //
-    //
-    //
-    //
     //    //MARK: - JSON Parsing
     //    /***************************************************************/
-    //
-    //    func updateWeatherData(json : JSON) {
-    //
-    //        if let tempResult = json["main"]["temp"].double {
-    //
-    //        weatherData.temperature = Int(round(tempResult!) - 273.15)
-    //        weatherData.city = json["name"].stringValue
-    //        weatherData.condition = json["weather"][0]["id"].intValue
-    //        weatherData.weatherIconName =    weatherData.updateWeatherIcon(condition: weatherData.condition)
-    //        }
-    //
-    //        updateUIWithWeatherData()
-    //    }
-    //
-    
-    
-    
-    
+    func updateBitcoinData(json:JSON) {
+        guard let rate = json["last"].double else {
+            bitcoinPriceLabel.text = "Network Issues";
+            return;
+        }
+        bitcoinPriceLabel.text = "\(currentCurrencySymbol) \(rate)";
+    }
+
 }
 
